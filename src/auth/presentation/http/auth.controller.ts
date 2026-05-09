@@ -29,7 +29,7 @@ import { Roles } from '../decorators/roles.decorator';
 import { GoogleAuthGuard } from '../guards/google-auth.guard';
 import { mapAuthErrorToHttpException } from './auth-error.mapper';
 import { AUTH_TOKENS } from '../../domain/constants/injection-tokens';
-import type {
+import {
   GoogleAuthRequestBody,
   LoginRequestBody,
   LogoutRequestBody,
