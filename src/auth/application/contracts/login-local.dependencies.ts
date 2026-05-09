@@ -1,10 +1,10 @@
 import type { IssueTokensResult } from '../../domain/services/issue-tokens.result';
-import type { LoginLocalUser } from '../dto/login-local-user.type';
+import type { AuthUserProfile } from '../../domain/types/auth-user-profile.type';
 
 export type LoginLocalDependencies = {
   userRepository: {
-    findByUsername(username: string): Promise<LoginLocalUser | null>;
-    save(user: LoginLocalUser): Promise<void>;
+    findByUsername(username: string): Promise<AuthUserProfile | null>;
+    save(user: AuthUserProfile): Promise<void>;
   };
   credentialsRepository: {
     findPasswordHashByUserId(userId: string): Promise<string | null>;

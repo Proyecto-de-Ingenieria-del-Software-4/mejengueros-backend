@@ -4,7 +4,7 @@ export type AuthUserProfile = {
   id: string;
   username: string;
   email: string;
-  role: AuthRole;
+  roles: AuthRole[];
   emailVerified: boolean;
   tokenVersion: number;
   failedLoginAttempts: number;

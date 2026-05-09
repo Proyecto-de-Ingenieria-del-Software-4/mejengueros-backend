@@ -17,29 +17,42 @@ describe('auth domain exceptions', () => {
     const error = new InvalidAuthIdentifierError('!bad');
 
     expect(error).toBeInstanceOf(AuthDomainError);
+    expect(error.code).toBe('auth/invalid-auth-identifier');
+    expect(error.httpStatus).toBe(401);
     expect(error.message).toBe('Invalid local auth identifier: !bad');
   });
 
   it('defines typed errors for canonical auth failures', () => {
-    expect(new InvalidCredentialsError().message).toBe('INVALID_CREDENTIALS');
+    expect(new InvalidCredentialsError().code).toBe('auth/invalid-credentials');
+    expect(new InvalidCredentialsError().httpStatus).toBe(401);
+    expect(new InvalidCredentialsError().message).toBe('Invalid credentials');
     expect(new EmailVerificationRequiredError().message).toBe(
-      'EMAIL_VERIFICATION_REQUIRED',
+      'Email verification is required',
+    );
+    expect(new EmailVerificationRequiredError().code).toBe(
+      'auth/email-verification-required',
     );
     expect(new InvalidOrExpiredTokenError().message).toBe(
-      'INVALID_OR_EXPIRED_TOKEN',
+      'Invalid or expired token',
     );
-    expect(new AccountLockedError().message).toBe('ACCOUNT_LOCKED');
+    expect(new AccountLockedError().message).toBe(
+      'Account is temporarily locked',
+    );
   });
 
   it('exports the remaining auth domain typed errors through barrel', () => {
-    expect(new UsernameAlreadyExistsError().message).toBe(
-      'USERNAME_ALREADY_EXISTS',
+    expect(new UsernameAlreadyExistsError().code).toBe(
+      'auth/username-already-in-use',
     );
-    expect(new EmailAlreadyExistsError().message).toBe('EMAIL_ALREADY_EXISTS');
+    expect(new EmailAlreadyExistsError().code).toBe(
+      'auth/email-already-in-use',
+    );
     expect(new PasswordPolicyFailedError().message).toBe(
-      'PASSWORD_POLICY_FAILED',
+      'Password policy validation failed',
     );
-    expect(new UserNotFoundError().message).toBe('USER_NOT_FOUND');
-    expect(new ForbiddenAuthActionError().message).toBe('FORBIDDEN');
+    expect(new UserNotFoundError().code).toBe('auth/user-not-found');
+    expect(new ForbiddenAuthActionError().message).toBe(
+      'Forbidden authentication action',
+    );
   });
 });

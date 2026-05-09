@@ -23,7 +23,7 @@ describe('Auth Prisma repositories', () => {
       id: 'user-1',
       username: 'player1',
       email: 'player1@example.com',
-      role: 'USER',
+      roles: ['USER'],
       emailVerified: false,
       tokenVersion: 2,
       failedLoginAttempts: 1,
@@ -34,14 +34,16 @@ describe('Auth Prisma repositories', () => {
       expect.objectContaining({
         username: 'player1',
         email: 'player1@example.com',
-        userRole: {
-          create: {
-            role: {
-              connect: {
-                code: 'USER',
+        userRoles: {
+          create: [
+            {
+              role: {
+                connect: {
+                  code: 'USER',
+                },
               },
             },
-          },
+          ],
         },
       }),
     );
@@ -66,7 +68,7 @@ describe('Auth Prisma repositories', () => {
         id: 'user-1',
         username: 'player1',
         email: 'player1@example.com',
-        role: 'USER',
+        roles: ['USER'],
         emailVerified: false,
         tokenVersion: 2,
         failedLoginAttempts: 1,
@@ -94,7 +96,7 @@ describe('Auth Prisma repositories', () => {
         id: 'user-1',
         username: 'player1',
         email: 'player1@example.com',
-        role: 'USER',
+        roles: ['USER'],
         emailVerified: false,
         tokenVersion: 2,
         failedLoginAttempts: 1,
@@ -121,7 +123,7 @@ describe('Auth Prisma repositories', () => {
         id: 'user-1',
         username: 'player1',
         email: 'player1@example.com',
-        role: 'USER',
+        roles: ['USER'],
         emailVerified: false,
         tokenVersion: 2,
         failedLoginAttempts: 1,
@@ -150,7 +152,7 @@ describe('Auth Prisma repositories', () => {
         id: 'user-1',
         username: 'player1',
         email: 'player1@example.com',
-        role: 'USER',
+        roles: ['USER'],
         emailVerified: false,
         tokenVersion: 2,
         failedLoginAttempts: 1,

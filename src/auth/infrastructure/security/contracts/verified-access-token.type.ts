@@ -1,5 +1,7 @@
+import type { AuthRole } from '../../../application/dto';
+
 export type VerifiedAccessToken = {
   sub: string;
-  role: 'USER' | 'ADMIN';
+  roles: AuthRole[];
   sid: string;
 };

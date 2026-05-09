@@ -21,7 +21,10 @@ export class AuthPrismaRefreshSessionRepository {
         data: { revokedAt: new Date() },
       });
     } catch (error) {
-      throw mapPrismaAuthError(error);
+      throw mapPrismaAuthError(error, {
+        repository: 'auth-prisma-refresh-session',
+        operation: 'revoke-session-by-id',
+      });
     }
   }
 
@@ -32,7 +35,10 @@ export class AuthPrismaRefreshSessionRepository {
         data: { revokedAt: new Date() },
       });
     } catch (error) {
-      throw mapPrismaAuthError(error);
+      throw mapPrismaAuthError(error, {
+        repository: 'auth-prisma-refresh-session',
+        operation: 'revoke-session-family',
+      });
     }
   }
 }

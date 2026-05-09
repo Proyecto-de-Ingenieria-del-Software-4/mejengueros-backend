@@ -2,7 +2,7 @@ import type { AuthRole } from './auth-role.type';
 
 export type LoginLocalUser = {
   id: string;
-  role: AuthRole;
+  roles: AuthRole[];
   tokenVersion: number;
   emailVerified: boolean;
   failedLoginAttempts: number;

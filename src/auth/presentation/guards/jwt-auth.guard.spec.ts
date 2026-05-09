@@ -1,4 +1,8 @@
-import { UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InvalidOrExpiredTokenError } from '../../domain/exceptions';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
@@ -7,7 +11,7 @@ describe('JwtAuthGuard', () => {
     const guard = new JwtAuthGuard({
       verifyAccessToken: jest.fn(() => ({
         sub: 'u1',
-        role: 'ADMIN',
+        roles: ['ADMIN'],
         sid: 's1',
       })),
     } as never);
@@ -24,7 +28,7 @@ describe('JwtAuthGuard', () => {
     expect(guard.canActivate(context as never)).toBe(true);
     expect(request.user).toEqual({
       userId: 'u1',
-      role: 'ADMIN',
+      roles: ['ADMIN'],
       sessionId: 's1',
     });
   });
@@ -56,8 +60,19 @@ describe('JwtAuthGuard', () => {
       getClass: () => null,
     };
 
-    expect(() => guard.canActivate(context as never)).toThrow(
-      UnauthorizedException,
-    );
+    try {
+      guard.canActivate(context as never);
+      fail('Expected guard to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(HttpException);
+      expect((error as HttpException).getStatus()).toBe(
+        HttpStatus.UNAUTHORIZED,
+      );
+      expect((error as HttpException).getResponse()).toEqual({
+        code: 'auth/invalid-or-expired-token',
+        status: HttpStatus.UNAUTHORIZED,
+        message: 'Invalid or expired token',
+      });
+    }
   });
 });

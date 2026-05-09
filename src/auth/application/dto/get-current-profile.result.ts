@@ -4,6 +4,6 @@ export type GetCurrentProfileResult = {
   id: string;
   username: string;
   email: string;
-  role: AuthRole;
+  roles: AuthRole[];
   emailVerified: boolean;
 };

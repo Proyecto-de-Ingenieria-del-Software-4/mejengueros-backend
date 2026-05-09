@@ -52,7 +52,7 @@ describe('AuthController', () => {
         id: 'user-2',
         username: 'newbie',
         email: 'newbie@example.com',
-        role: 'USER',
+        roles: ['USER'],
         emailVerified: false,
       },
       tokens: {
@@ -74,7 +74,7 @@ describe('AuthController', () => {
         id: 'user-2',
         username: 'newbie',
         email: 'newbie@example.com',
-        role: 'USER',
+        roles: ['USER'],
         emailVerified: false,
       },
       tokens: {
@@ -123,17 +123,17 @@ describe('AuthController', () => {
       id: 'user-1',
       username: 'player1',
       email: 'player1@example.com',
-      role: 'USER',
+      roles: ['USER'],
       emailVerified: true,
     });
 
     await expect(
-      controller.me({ userId: 'user-1', role: 'USER' }),
+      controller.me({ userId: 'user-1', roles: ['USER'] }),
     ).resolves.toEqual({
       id: 'user-1',
       username: 'player1',
       email: 'player1@example.com',
-      role: 'USER',
+      roles: ['USER'],
       emailVerified: true,
     });
     expect(getCurrentProfileUseCase.execute).toHaveBeenCalledWith({
@@ -166,7 +166,7 @@ describe('AuthController', () => {
   it('maps login requests to login use case', async () => {
     const { controller, loginUseCase } = makeController();
     loginUseCase.execute.mockResolvedValue({
-      user: { id: 'user-1', role: 'USER' },
+      user: { id: 'user-1', roles: ['USER'] },
       tokens: {
         accessToken: 'a1',
         refreshToken: 'r1',
@@ -178,7 +178,7 @@ describe('AuthController', () => {
     await expect(
       controller.login({ identifier: 'player1', password: 'Valid123!' }),
     ).resolves.toEqual({
-      user: { id: 'user-1', role: 'USER' },
+      user: { id: 'user-1', roles: ['USER'] },
       tokens: {
         accessToken: 'a1',
         refreshToken: 'r1',
@@ -270,7 +270,7 @@ describe('AuthController', () => {
     updateUserRoleUseCase.execute.mockResolvedValue(undefined);
 
     await expect(
-      controller.updateRole({ userId: 'admin-1', role: 'ADMIN' }, 'user-2', {
+      controller.updateRole({ userId: 'admin-1', roles: ['ADMIN'] }, 'user-2', {
         role: 'USER',
       }),
     ).resolves.toBeUndefined();

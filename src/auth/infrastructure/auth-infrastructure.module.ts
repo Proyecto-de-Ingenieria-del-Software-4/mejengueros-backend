@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AUTH_TOKENS } from '../domain/constants/injection-tokens';
+import { AuthFoundationBootstrapService } from './bootstrap/auth-foundation-bootstrap.service';
 import { AuthPrismaCredentialsRepository } from './persistence/auth-prisma-credentials.repository';
 import { AuthPrismaRefreshSessionRepository } from './persistence/auth-prisma-refresh-session.repository';
 import {
@@ -22,6 +23,7 @@ import { GoogleStrategy } from '../presentation/strategies/google.strategy';
 
 @Module({
   providers: [
+    AuthFoundationBootstrapService,
     AuthPrismaUsersRepository,
     AuthPrismaCredentialsRepository,
     AuthPrismaVerificationTokensRepository,

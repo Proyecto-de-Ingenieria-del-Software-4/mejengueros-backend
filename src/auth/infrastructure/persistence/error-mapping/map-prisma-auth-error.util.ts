@@ -4,6 +4,7 @@ import {
   EmailAlreadyExistsError,
   UsernameAlreadyExistsError,
 } from '../../../domain/exceptions';
+import type { PrismaAuthErrorContext } from './prisma-auth-error-context.type';
 import type { PrismaErrorLike } from './prisma-error-like.type';
 
 const PRISMA_UNIQUE_CONSTRAINT_CODE = 'P2002';
@@ -30,7 +31,20 @@ const toErrorMessage = (error: PrismaErrorLike): string => {
   return error.message.toLowerCase();
 };
 
-export const mapPrismaAuthError = (error: unknown): Error => {
+const toSafeMetadata = (
+  error: PrismaErrorLike,
+  context: PrismaAuthErrorContext,
+): Record<string, unknown> => ({
+  source: 'prisma',
+  repository: context.repository,
+  operation: context.operation,
+  ...(typeof error.code === 'string' ? { prismaCode: error.code } : {}),
+});
+
+export const mapPrismaAuthError = (
+  error: unknown,
+  context: PrismaAuthErrorContext,
+): Error => {
   const prismaError = error as PrismaErrorLike;
   const errorMessage = toErrorMessage(prismaError);
 
@@ -55,9 +69,15 @@ export const mapPrismaAuthError = (error: unknown): Error => {
       errorMessage.includes('authprovider') ||
       errorMessage.includes('auth provider')
     ) {
-      return new AuthBaselineNotReadyError();
+      return new AuthBaselineNotReadyError({
+        metadata: toSafeMetadata(prismaError, context),
+        cause: error,
+      });
     }
   }
 
-  return new AuthInfrastructureError();
+  return new AuthInfrastructureError({
+    metadata: toSafeMetadata(prismaError, context),
+    cause: error,
+  });
 };

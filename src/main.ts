@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { AppConfigService } from './shared/config/app-config.service';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './shared/http/filters/global-exception.filter';
+import { LoggingInterceptor } from './shared/http/interceptors/logging.interceptor';
+import { TransformInterceptor } from './shared/http/interceptors/transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,6 +15,10 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
     }),
+  );
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new TransformInterceptor(),
   );
   app.useGlobalFilters(new GlobalExceptionFilter());
   const appConfigService = app.get(AppConfigService);

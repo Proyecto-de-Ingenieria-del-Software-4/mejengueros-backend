@@ -5,7 +5,7 @@ export type RegisterLocalResult = {
     id: string;
     username: string;
     email: string;
-    role: AuthRole;
+    roles: AuthRole[];
     emailVerified: boolean;
   };
   tokens: {

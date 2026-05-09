@@ -1,68 +1,16 @@
 import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import {
+  buildAuthFoundationPlan,
+} from '../src/auth/infrastructure/bootstrap/auth-foundation-plan';
+import { ensureAuthFoundation } from '../src/auth/infrastructure/bootstrap/ensure-auth-foundation';
 
-export type AuthSeedPlan = {
-  roles: string[];
-  authProviders: string[];
-  passwordPolicy: {
-    minLength: number;
-    requireUppercase: boolean;
-    requireLowercase: boolean;
-    requireNumber: boolean;
-    requireSymbol: boolean;
-  };
-};
-
-export function buildAuthSeedPlan(): AuthSeedPlan {
-  return {
-    roles: ['USER', 'ADMIN'],
-    authProviders: ['LOCAL', 'GOOGLE'],
-    passwordPolicy: {
-      minLength: 12,
-      requireUppercase: true,
-      requireLowercase: true,
-      requireNumber: true,
-      requireSymbol: false,
-    },
-  };
-}
+export { buildAuthFoundationPlan as buildAuthSeedPlan };
 
 export async function seedAuthFoundation(prisma: PrismaClient): Promise<void> {
-  const plan = buildAuthSeedPlan();
+  const plan = buildAuthFoundationPlan();
 
-  await Promise.all(
-    plan.roles.map((role) =>
-      prisma.role.upsert({
-        where: { code: role },
-        update: {
-          name: role,
-          isActive: true,
-        },
-        create: {
-          code: role,
-          name: role,
-          isActive: true,
-        },
-      }),
-    ),
-  );
-
-  await Promise.all(
-    plan.authProviders.map((provider) =>
-      prisma.authProvider.upsert({
-        where: { code: provider },
-        update: {
-          name: provider,
-          isEnabled: true,
-        },
-        create: {
-          code: provider,
-          name: provider,
-          isEnabled: true,
-        },
-      }),
-    ),
-  );
+  await ensureAuthFoundation(prisma);
 
   await Promise.all(
     plan.roles.map((role) =>
@@ -75,14 +23,16 @@ export async function seedAuthFoundation(prisma: PrismaClient): Promise<void> {
           email: `${role.toLowerCase()}-seed@invalid.local`,
           username: `${role.toLowerCase()}_seed`,
           emailVerified: false,
-          userRole: {
-            create: {
-              role: {
-                connect: {
-                  code: role,
+          userRoles: {
+            create: [
+              {
+                role: {
+                  connect: {
+                    code: role,
+                  },
                 },
               },
-            },
+            ],
           },
         },
       }),

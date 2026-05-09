@@ -15,7 +15,7 @@ export class GetCurrentProfileUseCase {
       id: user.id,
       username: user.username,
       email: user.email,
-      role: user.role,
+      roles: user.roles,
       emailVerified: user.emailVerified,
     };
   }

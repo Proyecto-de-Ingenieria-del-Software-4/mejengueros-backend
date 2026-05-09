@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto';
 import {
+  AuthBaselineNotReadyError,
   InvalidOrExpiredTokenError,
   InvalidRefreshTokenError,
   RefreshTokenReuseDetectedError,
@@ -160,7 +161,7 @@ describe('RefreshTokenIssuerAdapter', () => {
     expect(payload.akid).toBe('active-key-1');
   });
 
-  it('falls back to configured app key id when no active key exists', async () => {
+  it('fails when no active app key exists', async () => {
     const { service, prisma } = build();
     prisma.appKey.findFirst = jest.fn(
       async (_args: {
@@ -171,10 +172,14 @@ describe('RefreshTokenIssuerAdapter', () => {
       },
     );
 
-    const issued = await service.issueForUser('user-1', 2);
-    const payload = service.parseTokenUnsafe(issued.refreshToken);
-
-    expect(payload.akid).toBe('app-key-active');
+    await expect(service.issueForUser('user-1', 2)).rejects.toMatchObject({
+      code: 'auth/baseline-not-ready',
+      metadata: {
+        source: 'auth/token-issuer',
+        operation: 'resolve-active-app-key',
+        reason: 'active-app-key-missing',
+      },
+    } satisfies Partial<AuthBaselineNotReadyError>);
   });
 
   it('revokes family and fails when refresh token is reused', async () => {

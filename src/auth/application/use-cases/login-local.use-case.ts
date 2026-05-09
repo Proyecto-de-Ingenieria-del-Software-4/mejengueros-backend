@@ -54,7 +54,7 @@ export class LoginLocalUseCase {
         user.id,
         user.tokenVersion,
       ),
-      user: { id: user.id, role: user.role },
+      user: { id: user.id, roles: user.roles },
     };
   }
 

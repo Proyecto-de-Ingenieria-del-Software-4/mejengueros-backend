@@ -6,6 +6,6 @@ export const CurrentUser = createParamDecorator(
     const request = context
       .switchToHttp()
       .getRequest<{ user?: AuthUserContext }>();
-    return request.user ?? { userId: '', role: 'USER' };
+    return request.user ?? { userId: '', roles: ['USER'] };
   },
 );
