@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AUTH_TOKENS } from '../domain/constants/injection-tokens';
 import { SHARED_TOKENS } from '../../shared/tokens/shared-tokens';
 import { AppConfigService } from '../../shared/config/app-config.service';
+import { AuthInfrastructureModule } from '../infrastructure/auth-infrastructure.module';
 import { LoginLocalUseCase } from './use-cases/login-local.use-case';
 import { RefreshTokenUseCase } from './use-cases/refresh-token.use-case';
 import { LogoutUseCase } from './use-cases/logout.use-case';
@@ -25,6 +26,7 @@ import type { TokenIssuer } from '../domain/services';
 import type { GoogleAuthVerifier } from '../domain/services/google-auth-verifier.service';
 
 @Module({
+  imports: [AuthInfrastructureModule],
   providers: [
     {
       provide: AUTH_TOKENS.LOGIN_LOCAL_USE_CASE,
