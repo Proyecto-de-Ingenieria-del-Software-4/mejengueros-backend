@@ -97,6 +97,8 @@ import { GoogleStrategy } from '../presentation/strategies/google.strategy';
     AUTH_TOKENS.TOKEN_ISSUER,
     AUTH_TOKENS.GOOGLE_AUTH_VERIFIER,
     AUTH_TOKENS.RESEND_VERIFICATION_THROTTLE_STORE,
+    JwtAccessTokenVerifierService,
+    GoogleStrategy,
     JwtAuthGuard,
     RolesGuard,
     GoogleAuthGuard,
