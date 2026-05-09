@@ -1,20 +1,28 @@
 import {
+  ConflictException,
   ForbiddenException,
   HttpException,
   HttpStatus,
   InternalServerErrorException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
   AccountLockedError,
+  AuthBaselineNotReadyError,
   AuthDomainError,
+  AuthInfrastructureError,
+  EmailAlreadyExistsError,
   EmailVerificationRequiredError,
   ForbiddenAuthActionError,
+  InvalidAuthIdentifierError,
   InvalidCredentialsError,
   InvalidRefreshTokenError,
   InvalidOrExpiredTokenError,
+  PasswordPolicyFailedError,
   RefreshTokenReuseDetectedError,
   UserNotFoundError,
+  UsernameAlreadyExistsError,
 } from '../../domain/exceptions';
 
 export const mapAuthErrorToHttpException = (error: unknown): HttpException => {
@@ -24,6 +32,22 @@ export const mapAuthErrorToHttpException = (error: unknown): HttpException => {
 
   if (error instanceof InvalidCredentialsError) {
     return new UnauthorizedException('INVALID_CREDENTIALS');
+  }
+
+  if (error instanceof InvalidAuthIdentifierError) {
+    return new UnauthorizedException('INVALID_AUTH_IDENTIFIER');
+  }
+
+  if (error instanceof UsernameAlreadyExistsError) {
+    return new ConflictException('USERNAME_ALREADY_EXISTS');
+  }
+
+  if (error instanceof EmailAlreadyExistsError) {
+    return new ConflictException('EMAIL_ALREADY_EXISTS');
+  }
+
+  if (error instanceof PasswordPolicyFailedError) {
+    return new HttpException('PASSWORD_POLICY_FAILED', HttpStatus.BAD_REQUEST);
   }
 
   if (error instanceof EmailVerificationRequiredError) {
@@ -52,6 +76,14 @@ export const mapAuthErrorToHttpException = (error: unknown): HttpException => {
 
   if (error instanceof UserNotFoundError) {
     return new ForbiddenException('FORBIDDEN');
+  }
+
+  if (error instanceof AuthBaselineNotReadyError) {
+    return new ServiceUnavailableException('AUTH_BASELINE_NOT_READY');
+  }
+
+  if (error instanceof AuthInfrastructureError) {
+    return new ServiceUnavailableException('AUTH_SERVICE_UNAVAILABLE');
   }
 
   if (!(error instanceof AuthDomainError)) {

@@ -65,7 +65,6 @@ describe('AuthController', () => {
 
     await expect(
       controller.register({
-        id: 'user-2',
         username: 'newbie',
         email: 'newbie@example.com',
         password: 'StrongPass123!',
@@ -86,7 +85,6 @@ describe('AuthController', () => {
       },
     });
     expect(registerUseCase.execute).toHaveBeenCalledWith({
-      id: 'user-2',
       username: 'newbie',
       email: 'newbie@example.com',
       password: 'StrongPass123!',

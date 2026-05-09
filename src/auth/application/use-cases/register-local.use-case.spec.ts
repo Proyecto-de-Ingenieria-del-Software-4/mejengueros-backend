@@ -81,26 +81,24 @@ describe('RegisterLocalUseCase', () => {
     } = build();
 
     const result = await useCase.execute({
-      id: 'user-2',
       username: 'newbie',
       email: 'newbie@example.com',
       password: 'StrongPass123!',
     });
 
-    expect(result.user).toEqual({
-      id: 'user-2',
-      username: 'newbie',
-      email: 'newbie@example.com',
-      role: 'USER',
-      emailVerified: false,
-    });
+    expect(result.user.username).toBe('newbie');
+    expect(result.user.email).toBe('newbie@example.com');
+    expect(result.user.role).toBe('USER');
+    expect(result.user.emailVerified).toBe(false);
+    expect(result.user.id).toEqual(expect.any(String));
     expect(saveUser).toHaveBeenCalledTimes(1);
+    const savedUser = saveUser.mock.calls[0]?.[0] as { id: string };
     expect(setPasswordHash).toHaveBeenCalledWith(
-      'user-2',
+      savedUser.id,
       'hash-StrongPass123!',
     );
     expect(issueVerificationToken).toHaveBeenCalledWith({
-      userId: 'user-2',
+      userId: savedUser.id,
       tokenHash: 'fp-opaque-token',
     });
     expect(publish).toHaveBeenCalledWith(expect.any(UserRegisteredEvent));
@@ -113,7 +111,6 @@ describe('RegisterLocalUseCase', () => {
 
     await expect(
       useCase.execute({
-        id: 'user-2',
         username: 'player1',
         email: 'newbie@example.com',
         password: 'StrongPass123!',
@@ -128,7 +125,6 @@ describe('RegisterLocalUseCase', () => {
 
     await expect(
       useCase.execute({
-        id: 'user-2',
         username: 'newbie',
         email: 'player1@example.com',
         password: 'StrongPass123!',
@@ -143,7 +139,6 @@ describe('RegisterLocalUseCase', () => {
 
     await expect(
       useCase.execute({
-        id: 'user-2',
         username: 'newbie',
         email: 'newbie@example.com',
         password: 'weak',

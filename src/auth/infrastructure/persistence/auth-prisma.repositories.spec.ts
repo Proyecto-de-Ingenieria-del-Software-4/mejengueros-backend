@@ -1,6 +1,7 @@
 import { AuthPrismaUsersRepository } from './auth-prisma-users.repository';
 import { AuthPrismaRefreshSessionRepository } from './auth-prisma-refresh-session.repository';
 import {
+  AuthBaselineNotReadyError,
   AuthInfrastructureError,
   EmailAlreadyExistsError,
   UsernameAlreadyExistsError,
@@ -127,6 +128,35 @@ describe('Auth Prisma repositories', () => {
         lockUntil: null,
       }),
     ).rejects.toBeInstanceOf(AuthInfrastructureError);
+  });
+
+  it('maps missing auth baseline relation to dedicated domain exception', async () => {
+    const prisma: ConstructorParameters<typeof AuthPrismaUsersRepository>[0] = {
+      user: {
+        upsert: jest.fn().mockRejectedValue({
+          code: 'P2025',
+          message:
+            'An operation failed because it depends on one or more records that were required but not found. No Role record was found for a nested connect.',
+        }),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+      },
+    };
+
+    const repository = new AuthPrismaUsersRepository(prisma);
+
+    await expect(
+      repository.save({
+        id: 'user-1',
+        username: 'player1',
+        email: 'player1@example.com',
+        role: 'USER',
+        emailVerified: false,
+        tokenVersion: 2,
+        failedLoginAttempts: 1,
+        lockUntil: null,
+      }),
+    ).rejects.toBeInstanceOf(AuthBaselineNotReadyError);
   });
 
   it('revokes refresh session family via prisma adapter', async () => {

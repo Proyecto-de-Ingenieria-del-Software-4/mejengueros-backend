@@ -1,16 +1,25 @@
 import {
+  ConflictException,
   ForbiddenException,
+  HttpStatus,
   InternalServerErrorException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
+  AuthBaselineNotReadyError,
   AuthDomainError,
+  AuthInfrastructureError,
+  EmailAlreadyExistsError,
   EmailVerificationRequiredError,
   ForbiddenAuthActionError,
+  InvalidAuthIdentifierError,
   InvalidCredentialsError,
   InvalidRefreshTokenError,
   InvalidOrExpiredTokenError,
+  PasswordPolicyFailedError,
   RefreshTokenReuseDetectedError,
+  UsernameAlreadyExistsError,
 } from '../../domain/exceptions';
 import { mapAuthErrorToHttpException } from './auth-error.mapper';
 
@@ -22,6 +31,42 @@ describe('mapAuthErrorToHttpException', () => {
 
     expect(exception).toBeInstanceOf(UnauthorizedException);
     expect(exception.message).toBe('INVALID_CREDENTIALS');
+  });
+
+  it('maps invalid auth identifier to unauthorized', () => {
+    const exception = mapAuthErrorToHttpException(
+      new InvalidAuthIdentifierError('bad'),
+    );
+
+    expect(exception).toBeInstanceOf(UnauthorizedException);
+    expect(exception.message).toBe('INVALID_AUTH_IDENTIFIER');
+  });
+
+  it('maps username already exists to conflict', () => {
+    const exception = mapAuthErrorToHttpException(
+      new UsernameAlreadyExistsError(),
+    );
+
+    expect(exception).toBeInstanceOf(ConflictException);
+    expect(exception.message).toBe('USERNAME_ALREADY_EXISTS');
+  });
+
+  it('maps email already exists to conflict', () => {
+    const exception = mapAuthErrorToHttpException(
+      new EmailAlreadyExistsError(),
+    );
+
+    expect(exception).toBeInstanceOf(ConflictException);
+    expect(exception.message).toBe('EMAIL_ALREADY_EXISTS');
+  });
+
+  it('maps password policy failed to bad request', () => {
+    const exception = mapAuthErrorToHttpException(
+      new PasswordPolicyFailedError(),
+    );
+
+    expect(exception.getStatus()).toBe(HttpStatus.BAD_REQUEST);
+    expect(exception.message).toBe('PASSWORD_POLICY_FAILED');
   });
 
   it('maps email verification required to forbidden', () => {
@@ -83,5 +128,23 @@ describe('mapAuthErrorToHttpException', () => {
     );
 
     expect(exception).toBeInstanceOf(InternalServerErrorException);
+  });
+
+  it('maps auth baseline not ready to service unavailable', () => {
+    const exception = mapAuthErrorToHttpException(
+      new AuthBaselineNotReadyError(),
+    );
+
+    expect(exception).toBeInstanceOf(ServiceUnavailableException);
+    expect(exception.message).toBe('AUTH_BASELINE_NOT_READY');
+  });
+
+  it('maps auth infrastructure errors to service unavailable', () => {
+    const exception = mapAuthErrorToHttpException(
+      new AuthInfrastructureError(),
+    );
+
+    expect(exception).toBeInstanceOf(ServiceUnavailableException);
+    expect(exception.message).toBe('AUTH_SERVICE_UNAVAILABLE');
   });
 });

@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Inject,
+  Logger,
   Param,
   Patch,
   Post,
@@ -44,6 +45,8 @@ import {
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     @Inject(AUTH_TOKENS.LOGIN_LOCAL_USE_CASE)
     private readonly loginLocalUseCase: LoginLocalUseCase,
@@ -75,6 +78,10 @@ export class AuthController {
     try {
       return await handler();
     } catch (error) {
+      this.logger.error(
+        'Auth request failed',
+        error instanceof Error ? error.stack : String(error),
+      );
       throw mapAuthErrorToHttpException(error);
     }
   }

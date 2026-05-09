@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   EmailAlreadyExistsError,
   PasswordPolicyFailedError,
@@ -26,7 +27,7 @@ export class RegisterLocalUseCase {
     if (!passwordValidation.valid) throw new PasswordPolicyFailedError();
 
     const user = AuthUser.create({
-      id: command.id,
+      id: randomUUID(),
       username: command.username,
       email: command.email,
       role: 'USER',
