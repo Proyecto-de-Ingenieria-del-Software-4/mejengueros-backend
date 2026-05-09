@@ -1,4 +1,5 @@
 export { AccountLockedError } from './account-locked.error';
+export { AuthBaselineNotReadyError } from './auth-baseline-not-ready.error';
 export { AuthInfrastructureError } from './auth-infrastructure.error';
 export { AuthDomainError } from './auth-domain.error';
 export { EmailAlreadyExistsError } from './email-already-exists.error';

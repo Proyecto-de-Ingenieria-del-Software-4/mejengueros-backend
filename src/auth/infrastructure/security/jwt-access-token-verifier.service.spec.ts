@@ -10,7 +10,7 @@ describe('JwtAccessTokenVerifierService', () => {
   it('returns typed access token payload when token claims are valid', () => {
     const service = createService({
       sub: 'user-1',
-      role: 'USER',
+      roles: ['USER'],
       sid: 'session-1',
       typ: 'access',
       exp: Math.floor(Date.now() / 1000) + 120,
@@ -18,7 +18,7 @@ describe('JwtAccessTokenVerifierService', () => {
 
     expect(service.verifyAccessToken('token')).toEqual({
       sub: 'user-1',
-      role: 'USER',
+      roles: ['USER'],
       sid: 'session-1',
     });
   });
@@ -26,7 +26,7 @@ describe('JwtAccessTokenVerifierService', () => {
   it('throws typed domain error when token claims shape is invalid', () => {
     const service = createService({
       sub: 'user-1',
-      role: 'USER',
+      roles: ['USER'],
       sid: 'session-1',
       typ: 'refresh',
       exp: Math.floor(Date.now() / 1000) + 120,
@@ -40,7 +40,7 @@ describe('JwtAccessTokenVerifierService', () => {
   it('throws typed domain error when access token is expired', () => {
     const service = createService({
       sub: 'user-1',
-      role: 'USER',
+      roles: ['USER'],
       sid: 'session-1',
       typ: 'access',
       exp: Math.floor(Date.now() / 1000) - 10,

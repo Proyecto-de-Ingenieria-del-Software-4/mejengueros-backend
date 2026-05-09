@@ -14,7 +14,7 @@ describe('GetCurrentProfileUseCase', () => {
       id: 'user-1',
       username: 'player1',
       email: 'player1@example.com',
-      role: 'USER',
+      roles: ['USER'],
       emailVerified: true,
     });
   });

@@ -13,11 +13,27 @@ describe('RegisterLocalUseCase', () => {
     findByUsername?: (username: string) => Promise<AuthUser | null>;
     findByEmail?: (email: string) => Promise<AuthUser | null>;
     validatePassword?: () => { valid: boolean; errors: string[] };
+    saveUserImpl?: () => Promise<void>;
+    setPasswordHashImpl?: () => Promise<void>;
+    issueVerificationTokenImpl?: () => Promise<void>;
+    publishImpl?: () => Promise<void>;
+    issueTokensImpl?: () => Promise<{
+      accessToken: string;
+      refreshToken: string;
+      refreshSessionId: string;
+      refreshFamilyId: string;
+    }>;
   }) => {
-    const saveUser = jest.fn(async () => undefined);
-    const setPasswordHash = jest.fn(async () => undefined);
-    const issueVerificationToken = jest.fn(async () => undefined);
-    const publish = jest.fn(async () => undefined);
+    const saveUser = jest.fn(
+      overrides?.saveUserImpl ?? (async () => undefined),
+    );
+    const setPasswordHash = jest.fn(
+      overrides?.setPasswordHashImpl ?? (async () => undefined),
+    );
+    const issueVerificationToken = jest.fn(
+      overrides?.issueVerificationTokenImpl ?? (async () => undefined),
+    );
+    const publish = jest.fn(overrides?.publishImpl ?? (async () => undefined));
 
     const useCase = new RegisterLocalUseCase({
       userRepository: {
@@ -32,12 +48,14 @@ describe('RegisterLocalUseCase', () => {
         issue: issueVerificationToken,
       },
       tokenIssuer: {
-        issueForUser: async () => ({
-          accessToken: 'a1',
-          refreshToken: 'r1',
-          refreshSessionId: 's1',
-          refreshFamilyId: 'f1',
-        }),
+        issueForUser:
+          overrides?.issueTokensImpl ??
+          (async () => ({
+            accessToken: 'a1',
+            refreshToken: 'r1',
+            refreshSessionId: 's1',
+            refreshFamilyId: 'f1',
+          })),
       },
       passwordHasher: {
         hash: async (plain: string) => `hash-${plain}`,
@@ -81,26 +99,27 @@ describe('RegisterLocalUseCase', () => {
     } = build();
 
     const result = await useCase.execute({
-      id: 'user-2',
       username: 'newbie',
       email: 'newbie@example.com',
       password: 'StrongPass123!',
     });
 
-    expect(result.user).toEqual({
-      id: 'user-2',
-      username: 'newbie',
-      email: 'newbie@example.com',
-      role: 'USER',
-      emailVerified: false,
-    });
+    expect(result.user.username).toBe('newbie');
+    expect(result.user.email).toBe('newbie@example.com');
+    expect(result.user.roles).toEqual(['USER']);
+    expect(result.user.emailVerified).toBe(false);
+    expect(result.user.id).toEqual(expect.any(String));
     expect(saveUser).toHaveBeenCalledTimes(1);
+    const savedUser = (
+      saveUser.mock.calls as Array<Array<{ id: string }>>
+    )[0]?.[0];
+    expect(savedUser).toBeDefined();
     expect(setPasswordHash).toHaveBeenCalledWith(
-      'user-2',
+      savedUser.id,
       'hash-StrongPass123!',
     );
     expect(issueVerificationToken).toHaveBeenCalledWith({
-      userId: 'user-2',
+      userId: savedUser.id,
       tokenHash: 'fp-opaque-token',
     });
     expect(publish).toHaveBeenCalledWith(expect.any(UserRegisteredEvent));
@@ -113,7 +132,6 @@ describe('RegisterLocalUseCase', () => {
 
     await expect(
       useCase.execute({
-        id: 'user-2',
         username: 'player1',
         email: 'newbie@example.com',
         password: 'StrongPass123!',
@@ -128,7 +146,6 @@ describe('RegisterLocalUseCase', () => {
 
     await expect(
       useCase.execute({
-        id: 'user-2',
         username: 'newbie',
         email: 'player1@example.com',
         password: 'StrongPass123!',
@@ -143,11 +160,32 @@ describe('RegisterLocalUseCase', () => {
 
     await expect(
       useCase.execute({
-        id: 'user-2',
         username: 'newbie',
         email: 'newbie@example.com',
         password: 'weak',
       }),
     ).rejects.toBeInstanceOf(PasswordPolicyFailedError);
+  });
+
+  it('wraps unexpected infrastructure failure with operation metadata', async () => {
+    const { useCase } = build({
+      setPasswordHashImpl: async () => {
+        throw new Error('hash service timeout');
+      },
+    });
+
+    await expect(
+      useCase.execute({
+        username: 'newbie',
+        email: 'newbie@example.com',
+        password: 'StrongPass123!',
+      }),
+    ).rejects.toMatchObject({
+      code: 'auth/service-unavailable',
+      metadata: {
+        source: 'auth/register',
+        operation: 'set-password-hash',
+      },
+    });
   });
 });

@@ -12,11 +12,6 @@ export class RegisterRequestBody {
   @Transform(trimString)
   @IsString()
   @IsNotEmpty()
-  id!: string;
-
-  @Transform(trimString)
-  @IsString()
-  @IsNotEmpty()
   @MinLength(3)
   @MaxLength(32)
   username!: string;

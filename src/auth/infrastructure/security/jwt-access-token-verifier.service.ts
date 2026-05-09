@@ -18,7 +18,9 @@ export class JwtAccessTokenVerifierService implements AccessTokenVerifier {
     if (
       !payload.sub ||
       !payload.sid ||
-      (payload.role !== 'USER' && payload.role !== 'ADMIN') ||
+      !Array.isArray(payload.roles) ||
+      payload.roles.length === 0 ||
+      payload.roles.some((role) => role !== 'USER' && role !== 'ADMIN') ||
       payload.typ !== 'access' ||
       typeof payload.exp !== 'number'
     ) {
@@ -29,6 +31,6 @@ export class JwtAccessTokenVerifierService implements AccessTokenVerifier {
       throw new InvalidOrExpiredTokenError();
     }
 
-    return { sub: payload.sub, role: payload.role, sid: payload.sid };
+    return { sub: payload.sub, roles: payload.roles, sid: payload.sid };
   }
 }

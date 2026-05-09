@@ -4,11 +4,11 @@ export type PrismaUserRecord = {
   id: string;
   username: string;
   email: string;
-  userRole: {
+  userRoles: Array<{
     role: {
       code: 'USER' | 'ADMIN';
     };
-  } | null;
+  }>;
   emailVerified: boolean;
   tokenVersion: number;
   failedLoginCount: number;
@@ -20,7 +20,10 @@ export function toAuthUserProfile(record: PrismaUserRecord): AuthUserProfile {
     id: record.id,
     username: record.username,
     email: record.email,
-    role: record.userRole?.role.code ?? 'USER',
+    roles:
+      record.userRoles.length > 0
+        ? record.userRoles.map((userRole) => userRole.role.code)
+        : ['USER'],
     emailVerified: record.emailVerified,
     tokenVersion: record.tokenVersion,
     failedLoginAttempts: record.failedLoginCount,

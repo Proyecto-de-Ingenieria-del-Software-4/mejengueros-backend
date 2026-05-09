@@ -14,6 +14,9 @@ import {
   RefreshTokenReuseDetectedError,
 } from '../src/auth/domain/exceptions';
 import { JwtAccessTokenVerifierService } from '../src/auth/infrastructure/security/jwt-access-token-verifier.service';
+import { GlobalExceptionFilter } from '../src/shared/http/filters/global-exception.filter';
+import { LoggingInterceptor } from '../src/shared/http/interceptors/logging.interceptor';
+import { TransformInterceptor } from '../src/shared/http/interceptors/transform.interceptor';
 
 describe('AuthController HTTP flows (integration)', () => {
   let app: INestApplication<App>;
@@ -99,6 +102,11 @@ describe('AuthController HTTP flows (integration)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalInterceptors(
+      new LoggingInterceptor(),
+      new TransformInterceptor(),
+    );
+    app.useGlobalFilters(new GlobalExceptionFilter());
     await app.init();
   });
 
@@ -115,10 +123,19 @@ describe('AuthController HTTP flows (integration)', () => {
       .post('/auth/login')
       .send({ identifier: 'player1', password: 'bad' })
       .expect(403)
-      .expect({
-        message: 'EMAIL_VERIFICATION_REQUIRED',
-        error: 'Forbidden',
-        statusCode: 403,
+      .expect((response) => {
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toMatchObject({
+          code: 'auth/email-verification-required',
+          status: 403,
+          message: 'Email verification is required',
+        });
+        expect(response.body.meta).toMatchObject({
+          path: '/auth/login',
+          method: 'POST',
+        });
+        expect(typeof response.body.meta.timestamp).toBe('string');
+        expect(typeof response.body.meta.requestId).toBe('string');
       });
   });
 
@@ -129,9 +146,13 @@ describe('AuthController HTTP flows (integration)', () => {
       .post('/auth/login')
       .send({ identifier: 'player1', password: 'bad' })
       .expect(423)
-      .expect({
-        message: 'ACCOUNT_LOCKED',
-        statusCode: 423,
+      .expect((response) => {
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toMatchObject({
+          code: 'auth/account-locked',
+          status: 423,
+          message: 'Account is temporarily locked',
+        });
       });
   });
 
@@ -144,15 +165,28 @@ describe('AuthController HTTP flows (integration)', () => {
       .post('/auth/refresh')
       .send({ refreshToken: 'stolen-token' })
       .expect(401)
-      .expect({
-        message: 'REFRESH_TOKEN_REUSE_DETECTED',
-        error: 'Unauthorized',
-        statusCode: 401,
+      .expect((response) => {
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toMatchObject({
+          code: 'auth/refresh-token-reuse-detected',
+          status: 401,
+          message: 'Refresh token reuse detected',
+        });
       });
   });
 
   it('enforces auth guard on protected endpoint', async () => {
-    await request(app.getHttpServer()).get('/auth/me').expect(401);
+    await request(app.getHttpServer())
+      .get('/auth/me')
+      .expect(401)
+      .expect((response) => {
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toMatchObject({
+          code: 'auth/unauthorized',
+          status: 401,
+          message: 'AUTH_REQUIRED',
+        });
+      });
   });
 
   it('returns sanitized profile on protected endpoint with valid auth', async () => {
@@ -168,12 +202,21 @@ describe('AuthController HTTP flows (integration)', () => {
       .get('/auth/me')
       .set('authorization', 'Bearer allow')
       .expect(200)
-      .expect({
-        id: 'user-1',
-        username: 'player1',
-        email: 'player1@example.com',
-        role: 'USER',
-        emailVerified: true,
+      .expect((response) => {
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toEqual({
+          id: 'user-1',
+          username: 'player1',
+          email: 'player1@example.com',
+          role: 'USER',
+          emailVerified: true,
+        });
+        expect(response.body.meta).toMatchObject({
+          path: '/auth/me',
+          method: 'GET',
+        });
+        expect(typeof response.body.meta.timestamp).toBe('string');
+        expect(typeof response.body.meta.requestId).toBe('string');
       });
   });
 
@@ -187,9 +230,16 @@ describe('AuthController HTTP flows (integration)', () => {
       .post('/auth/google/web')
       .send({ idToken: 'google-token' })
       .expect(201)
-      .expect({
-        allowed: false,
-        reason: 'GOOGLE_LINK_CONFLICT',
+      .expect((response) => {
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toEqual({
+          allowed: false,
+          reason: 'GOOGLE_LINK_CONFLICT',
+        });
+        expect(response.body.meta).toMatchObject({
+          path: '/auth/google/web',
+          method: 'POST',
+        });
       });
   });
 
@@ -205,11 +255,18 @@ describe('AuthController HTTP flows (integration)', () => {
       .post('/auth/google/web')
       .send({ idToken: 'google-token-success' })
       .expect(201)
-      .expect({
-        allowed: true,
-        reason: 'GOOGLE_AUTH_READY',
-        email: 'google@example.com',
-        subject: 'google-subject',
+      .expect((response) => {
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toEqual({
+          allowed: true,
+          reason: 'GOOGLE_AUTH_READY',
+          email: 'google@example.com',
+          subject: 'google-subject',
+        });
+        expect(response.body.meta).toMatchObject({
+          path: '/auth/google/web',
+          method: 'POST',
+        });
       });
   });
 
@@ -227,16 +284,26 @@ describe('AuthController HTTP flows (integration)', () => {
       .post('/auth/verify-email')
       .send({ token: 'verify-token' })
       .expect(201)
-      .expect({ verified: true });
+      .expect((response) => {
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toEqual({ verified: true });
+        expect(response.body.meta).toMatchObject({
+          path: '/auth/verify-email',
+          method: 'POST',
+        });
+      });
 
     await request(app.getHttpServer())
       .post('/auth/verify-email')
       .send({ token: 'verify-token' })
       .expect(401)
-      .expect({
-        message: 'INVALID_OR_EXPIRED_TOKEN',
-        error: 'Unauthorized',
-        statusCode: 401,
+      .expect((response) => {
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toMatchObject({
+          code: 'auth/invalid-or-expired-token',
+          status: 401,
+          message: 'Invalid or expired token',
+        });
       });
   });
 
@@ -269,10 +336,13 @@ describe('AuthController HTTP flows (integration)', () => {
       .post('/auth/refresh')
       .send({ refreshToken: 'session-1' })
       .expect(401)
-      .expect({
-        message: 'INVALID_REFRESH_TOKEN',
-        error: 'Unauthorized',
-        statusCode: 401,
+      .expect((response) => {
+        expect(response.body.success).toBe(false);
+        expect(response.body.error).toMatchObject({
+          code: 'auth/invalid-refresh-token',
+          status: 401,
+          message: 'Invalid refresh token',
+        });
       });
   });
 });

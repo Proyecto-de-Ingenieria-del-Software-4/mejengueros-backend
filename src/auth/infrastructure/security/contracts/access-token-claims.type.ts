@@ -1,6 +1,8 @@
+import type { AuthRole } from '../../../application/dto';
+
 export type AccessTokenClaims = {
   sub: string;
-  role: 'USER' | 'ADMIN';
+  roles: AuthRole[];
   sid: string;
   typ: 'access';
   exp: number;

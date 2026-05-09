@@ -1,6 +1,3 @@
-export class AuthDomainError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'AuthDomainError';
-  }
-}
+import { DomainException } from '../../../shared/domain/exceptions/domain.exception';
+
+export abstract class AuthDomainError extends DomainException {}

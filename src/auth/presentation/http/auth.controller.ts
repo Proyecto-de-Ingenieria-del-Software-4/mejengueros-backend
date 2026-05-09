@@ -27,7 +27,6 @@ import { RolesGuard } from '../guards/roles.guard';
 import { Public } from '../decorators/public.decorator';
 import { Roles } from '../decorators/roles.decorator';
 import { GoogleAuthGuard } from '../guards/google-auth.guard';
-import { mapAuthErrorToHttpException } from './auth-error.mapper';
 import { AUTH_TOKENS } from '../../domain/constants/injection-tokens';
 import {
   GoogleAuthRequestBody,
@@ -71,93 +70,75 @@ export class AuthController {
     private readonly updateUserRoleUseCase: UpdateUserRoleUseCase,
   ) {}
 
-  private async execute<T>(handler: () => Promise<T>): Promise<T> {
-    try {
-      return await handler();
-    } catch (error) {
-      throw mapAuthErrorToHttpException(error);
-    }
-  }
-
   @Post('register')
   @Public()
   register(@Body() body: RegisterRequestBody) {
-    return this.execute(() => this.registerLocalUseCase.execute(body));
+    return this.registerLocalUseCase.execute(body);
   }
 
   @Post('verify-email')
   @Public()
   verifyEmail(@Body() body: VerifyEmailRequestBody) {
-    return this.execute(() =>
-      this.verifyEmailUseCase.execute({ token: body.token }),
-    );
+    return this.verifyEmailUseCase.execute({ token: body.token });
   }
 
   @Post('resend-verification')
   @Public()
   resendVerification(@Body() body: ResendVerificationRequestBody) {
-    return this.execute(() =>
-      this.resendVerificationUseCase.execute({ email: body.email }),
-    );
+    return this.resendVerificationUseCase.execute({ email: body.email });
   }
 
   @Post('login')
   @Public()
   login(@Body() body: LoginRequestBody) {
-    return this.execute(() => this.loginLocalUseCase.execute(body));
+    return this.loginLocalUseCase.execute(body);
   }
 
   @Post('refresh')
   @Public()
   refresh(@Body() body: RefreshRequestBody) {
-    return this.execute(() => this.refreshTokenUseCase.execute(body));
+    return this.refreshTokenUseCase.execute(body);
   }
 
   @Post('logout')
   logout(@Body() body: LogoutRequestBody) {
-    return this.execute(() => this.logoutUseCase.execute(body));
+    return this.logoutUseCase.execute(body);
   }
 
   @Post('request-password-reset')
   @Public()
   requestPasswordReset(@Body() body: RequestPasswordResetRequestBody) {
-    return this.execute(() =>
-      this.requestPasswordResetUseCase.execute({ email: body.email }),
-    );
+    return this.requestPasswordResetUseCase.execute({ email: body.email });
   }
 
   @Post('reset-password')
   @Public()
   resetPassword(@Body() body: ResetPasswordRequestBody) {
-    return this.execute(() => this.resetPasswordUseCase.execute(body));
+    return this.resetPasswordUseCase.execute(body);
   }
 
   @Post('google/web')
   @Public()
   @UseGuards(GoogleAuthGuard)
   googleWeb(@Body() body: GoogleAuthRequestBody) {
-    return this.execute(() =>
-      this.authenticateWithGoogleWebUseCase.execute({ idToken: body.idToken }),
-    );
+    return this.authenticateWithGoogleWebUseCase.execute({
+      idToken: body.idToken,
+    });
   }
 
   @Post('google/mobile')
   @Public()
   @UseGuards(GoogleAuthGuard)
   googleMobile(@Body() body: GoogleAuthRequestBody) {
-    return this.execute(() =>
-      this.authenticateWithGoogleMobileUseCase.execute({
-        idToken: body.idToken,
-      }),
-    );
+    return this.authenticateWithGoogleMobileUseCase.execute({
+      idToken: body.idToken,
+    });
   }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@CurrentUser() user: AuthUserContext) {
-    return this.execute(() =>
-      this.getCurrentProfileUseCase.execute({ userId: user.userId }),
-    );
+    return this.getCurrentProfileUseCase.execute({ userId: user.userId });
   }
 
   @Patch('roles/:targetUserId')
@@ -168,12 +149,10 @@ export class AuthController {
     @Param('targetUserId') targetUserId: string,
     @Body() body: UpdateRoleRequestBody,
   ) {
-    return this.execute(() =>
-      this.updateUserRoleUseCase.execute({
-        actorUserId: user.userId,
-        targetUserId,
-        role: body.role,
-      }),
-    );
+    return this.updateUserRoleUseCase.execute({
+      actorUserId: user.userId,
+      targetUserId,
+      role: body.role,
+    });
   }
 }

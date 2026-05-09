@@ -31,7 +31,7 @@ describe('UpdateUserRoleUseCase', () => {
             id: 'admin-1',
             username: 'admin',
             email: 'admin@example.com',
-            role: 'ADMIN',
+            roles: ['ADMIN'],
           }),
         updateRole,
       },

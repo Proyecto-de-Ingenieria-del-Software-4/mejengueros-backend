@@ -1,8 +1,11 @@
 import { AuthDomainError } from './auth-domain.error';
+import { HttpStatusCode } from '../../../shared/domain/enums/http-status-code.enum';
 
 export class EmailVerificationRequiredError extends AuthDomainError {
+  readonly code = 'auth/email-verification-required';
+  readonly httpStatus = HttpStatusCode.FORBIDDEN;
+
   constructor() {
-    super('EMAIL_VERIFICATION_REQUIRED');
-    this.name = 'EmailVerificationRequiredError';
+    super('Email verification is required');
   }
 }

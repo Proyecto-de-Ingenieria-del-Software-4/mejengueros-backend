@@ -1,86 +1,52 @@
 import {
-  ForbiddenException,
+  HttpException,
+  HttpStatus,
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
-  AuthDomainError,
-  EmailVerificationRequiredError,
-  ForbiddenAuthActionError,
   InvalidCredentialsError,
-  InvalidRefreshTokenError,
-  InvalidOrExpiredTokenError,
-  RefreshTokenReuseDetectedError,
+  UsernameAlreadyExistsError,
 } from '../../domain/exceptions';
 import { mapAuthErrorToHttpException } from './auth-error.mapper';
 
 describe('mapAuthErrorToHttpException', () => {
-  it('maps invalid credentials to unauthorized', () => {
+  it('maps auth domain errors preserving code/status/message', () => {
     const exception = mapAuthErrorToHttpException(
       new InvalidCredentialsError(),
     );
 
-    expect(exception).toBeInstanceOf(UnauthorizedException);
-    expect(exception.message).toBe('INVALID_CREDENTIALS');
+    expect(exception).toBeInstanceOf(HttpException);
+    expect(exception.getStatus()).toBe(HttpStatus.UNAUTHORIZED);
+    expect(exception.getResponse()).toEqual({
+      code: 'auth/invalid-credentials',
+      status: HttpStatus.UNAUTHORIZED,
+      message: 'Invalid credentials',
+    });
   });
 
-  it('maps email verification required to forbidden', () => {
+  it('maps conflict domain errors preserving semantic code', () => {
     const exception = mapAuthErrorToHttpException(
-      new EmailVerificationRequiredError(),
+      new UsernameAlreadyExistsError(),
     );
 
-    expect(exception).toBeInstanceOf(ForbiddenException);
-    expect(exception.message).toBe('EMAIL_VERIFICATION_REQUIRED');
+    expect(exception).toBeInstanceOf(HttpException);
+    expect(exception.getStatus()).toBe(HttpStatus.CONFLICT);
+    expect(exception.getResponse()).toEqual({
+      code: 'auth/username-already-in-use',
+      status: HttpStatus.CONFLICT,
+      message: 'Username already exists',
+    });
   });
 
-  it('maps invalid-or-expired token to unauthorized', () => {
-    const exception = mapAuthErrorToHttpException(
-      new InvalidOrExpiredTokenError(),
-    );
+  it('returns existing HttpException instances unchanged', () => {
+    const existing = new UnauthorizedException('already-mapped');
 
-    expect(exception).toBeInstanceOf(UnauthorizedException);
-    expect(exception.message).toBe('INVALID_OR_EXPIRED_TOKEN');
+    expect(mapAuthErrorToHttpException(existing)).toBe(existing);
   });
 
-  it('maps invalid refresh token to unauthorized', () => {
-    const exception = mapAuthErrorToHttpException(
-      new InvalidRefreshTokenError(),
-    );
-
-    expect(exception).toBeInstanceOf(UnauthorizedException);
-    expect(exception.message).toBe('INVALID_REFRESH_TOKEN');
-  });
-
-  it('maps refresh token reuse detected to unauthorized', () => {
-    const exception = mapAuthErrorToHttpException(
-      new RefreshTokenReuseDetectedError(),
-    );
-
-    expect(exception).toBeInstanceOf(UnauthorizedException);
-    expect(exception.message).toBe('REFRESH_TOKEN_REUSE_DETECTED');
-  });
-
-  it('maps forbidden auth action to forbidden exception', () => {
-    const exception = mapAuthErrorToHttpException(
-      new ForbiddenAuthActionError(),
-    );
-
-    expect(exception).toBeInstanceOf(ForbiddenException);
-    expect(exception.message).toBe('FORBIDDEN');
-  });
-
-  it('does not fallback legacy forbidden string anymore', () => {
-    const exception = mapAuthErrorToHttpException(
-      new AuthDomainError('FORBIDDEN'),
-    );
-
-    expect(exception).toBeInstanceOf(InternalServerErrorException);
-  });
-
-  it('does not fallback legacy invalid credentials string anymore', () => {
-    const exception = mapAuthErrorToHttpException(
-      new AuthDomainError('INVALID_CREDENTIALS'),
-    );
+  it('falls back to internal server error for unknown errors', () => {
+    const exception = mapAuthErrorToHttpException(new Error('unexpected'));
 
     expect(exception).toBeInstanceOf(InternalServerErrorException);
   });

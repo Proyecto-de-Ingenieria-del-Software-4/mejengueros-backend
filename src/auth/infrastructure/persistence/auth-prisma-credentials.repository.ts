@@ -26,7 +26,10 @@ export class AuthPrismaCredentialsRepository {
       });
       return identity?.passwordHash ?? null;
     } catch (error) {
-      throw mapPrismaAuthError(error);
+      throw mapPrismaAuthError(error, {
+        repository: 'auth-prisma-credentials',
+        operation: 'find-local-password-hash',
+      });
     }
   }
 
@@ -47,7 +50,11 @@ export class AuthPrismaCredentialsRepository {
 
       await this.prisma.authIdentity.create({
         data: {
-          userId,
+          user: {
+            connect: {
+              id: userId,
+            },
+          },
           provider: {
             connect: {
               code: 'LOCAL',
@@ -58,7 +65,10 @@ export class AuthPrismaCredentialsRepository {
         },
       });
     } catch (error) {
-      throw mapPrismaAuthError(error);
+      throw mapPrismaAuthError(error, {
+        repository: 'auth-prisma-credentials',
+        operation: 'set-local-password-hash',
+      });
     }
   }
 }

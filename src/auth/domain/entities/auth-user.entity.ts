@@ -5,7 +5,7 @@ type CreateAuthUserProps = {
   username: string;
   email: string;
   emailVerified: boolean;
-  role: AuthRole;
+  roles: AuthRole[];
   tokenVersion: number;
   failedLoginAttempts: number;
   lockUntil: Date | null;
@@ -40,8 +40,8 @@ export class AuthUser {
     return this.props.emailVerified;
   }
 
-  get role(): AuthRole {
-    return this.props.role;
+  get roles(): AuthRole[] {
+    return this.props.roles;
   }
 
   get failedLoginAttempts(): number {

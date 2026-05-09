@@ -75,7 +75,7 @@ describe('LoginLocalUseCase', () => {
     return { useCase, savedUsers };
   };
 
-  it('returns tokens and user id/role when credentials are valid', async () => {
+  it('returns tokens and user roles when credentials are valid', async () => {
     const { useCase, savedUsers } = build();
 
     const result = await useCase.execute({
@@ -83,7 +83,7 @@ describe('LoginLocalUseCase', () => {
       password: 'Valid123!',
     });
 
-    expect(result.user).toEqual({ id: 'user-1', role: 'USER' });
+    expect(result.user).toEqual({ id: 'user-1', roles: ['USER'] });
     expect(result.tokens.refreshToken).toBe('r1');
     expect(savedUsers).toEqual([{ failedLoginAttempts: 0, lockUntil: null }]);
   });

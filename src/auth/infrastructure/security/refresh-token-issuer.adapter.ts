@@ -4,6 +4,7 @@ import { TokenKeyManagementService } from '../../../shared/security/tokens/token
 import type { IssueTokensResult } from '../../domain/services/issue-tokens.result';
 import { PrismaService } from '../../../shared/persistence/prisma.service';
 import {
+  AuthBaselineNotReadyError,
   InvalidRefreshTokenError,
   InvalidOrExpiredTokenError,
   RefreshTokenReuseDetectedError,
@@ -31,7 +32,7 @@ type TokenPrismaClient = {
   user?: {
     findUnique(args: unknown): Promise<{
       tokenVersion: number;
-      role?: 'USER' | 'ADMIN';
+      userRoles?: Array<{ role: { code: 'USER' | 'ADMIN' } }>;
     } | null>;
   };
 };
@@ -48,8 +49,6 @@ type RefreshTokenClaims = {
 
 @Injectable()
 export class RefreshTokenIssuerAdapter {
-  private readonly fallbackActiveAppKeyId = 'app-key-active';
-
   constructor(
     @Inject(PrismaService) private readonly prisma: TokenPrismaClient,
     private readonly tokenKeyManagement: TokenKeyManagementService,
@@ -62,7 +61,9 @@ export class RefreshTokenIssuerAdapter {
     const user = this.prisma.user
       ? await this.prisma.user.findUnique({ where: { id: userId } })
       : null;
-    const userRole = user?.role ?? 'USER';
+    const userRoles = user?.userRoles?.map(
+      (userRole) => userRole.role.code,
+    ) ?? ['USER'];
     const refreshSessionId = randomUUID();
     const refreshJti = randomUUID();
     const refreshFamilyId = randomUUID();
@@ -80,7 +81,7 @@ export class RefreshTokenIssuerAdapter {
     const accessToken = this.tokenKeyManagement.signJwtLike({
       sub: userId,
       sid: refreshSessionId,
-      role: userRole,
+      roles: userRoles,
       typ: 'access',
       exp: Math.floor((Date.now() + 1000 * 60 * 15) / 1000),
     });
@@ -173,7 +174,7 @@ export class RefreshTokenIssuerAdapter {
     const nextAccessToken = this.tokenKeyManagement.signJwtLike({
       sub: current.userId,
       sid: nextSessionId,
-      role: 'USER',
+      roles: ['USER'],
       typ: 'access',
       exp: Math.floor((Date.now() + 1000 * 60 * 15) / 1000),
     });
@@ -227,12 +228,29 @@ export class RefreshTokenIssuerAdapter {
 
   private async resolveActiveAppKeyId(): Promise<string> {
     if (!this.prisma.appKey) {
-      return this.fallbackActiveAppKeyId;
+      throw new AuthBaselineNotReadyError({
+        metadata: {
+          source: 'auth/token-issuer',
+          operation: 'resolve-active-app-key',
+          reason: 'app-key-repository-unavailable',
+        },
+      });
     }
 
     const activeKey = await this.prisma.appKey.findFirst({
       where: { status: 'ACTIVE' },
     });
-    return activeKey?.id ?? this.fallbackActiveAppKeyId;
+
+    if (!activeKey) {
+      throw new AuthBaselineNotReadyError({
+        metadata: {
+          source: 'auth/token-issuer',
+          operation: 'resolve-active-app-key',
+          reason: 'active-app-key-missing',
+        },
+      });
+    }
+
+    return activeKey.id;
   }
 }

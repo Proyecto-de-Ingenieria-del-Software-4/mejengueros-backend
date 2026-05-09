@@ -22,7 +22,7 @@ export class AuthPrismaUsersRepository {
   async findById(id: string): Promise<AuthUserProfile | null> {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: { userRole: { include: { role: true } } },
+      include: { userRoles: { include: { role: true } } },
     });
     return user ? toAuthUserProfile(user) : null;
   }
@@ -30,7 +30,7 @@ export class AuthPrismaUsersRepository {
   async findByUsername(username: string): Promise<AuthUserProfile | null> {
     const user = await this.prisma.user.findUnique({
       where: { username },
-      include: { userRole: { include: { role: true } } },
+      include: { userRoles: { include: { role: true } } },
     });
     return user ? toAuthUserProfile(user) : null;
   }
@@ -38,7 +38,7 @@ export class AuthPrismaUsersRepository {
   async findByEmail(email: string): Promise<AuthUserProfile | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
-      include: { userRole: { include: { role: true } } },
+      include: { userRoles: { include: { role: true } } },
     });
     return user ? toAuthUserProfile(user) : null;
   }
@@ -55,14 +55,14 @@ export class AuthPrismaUsersRepository {
           tokenVersion: user.tokenVersion,
           failedLoginCount: user.failedLoginAttempts,
           lockoutUntil: user.lockUntil,
-          userRole: {
-            create: {
+          userRoles: {
+            create: user.roles.map((role) => ({
               role: {
                 connect: {
-                  code: user.role,
+                  code: role,
                 },
               },
-            },
+            })),
           },
         },
         update: {
@@ -72,28 +72,23 @@ export class AuthPrismaUsersRepository {
           tokenVersion: user.tokenVersion,
           failedLoginCount: user.failedLoginAttempts,
           lockoutUntil: user.lockUntil,
-          userRole: {
-            upsert: {
-              create: {
-                role: {
-                  connect: {
-                    code: user.role,
-                  },
+          userRoles: {
+            deleteMany: {},
+            create: user.roles.map((role) => ({
+              role: {
+                connect: {
+                  code: role,
                 },
               },
-              update: {
-                role: {
-                  connect: {
-                    code: user.role,
-                  },
-                },
-              },
-            },
+            })),
           },
         },
       });
     } catch (error) {
-      throw mapPrismaAuthError(error);
+      throw mapPrismaAuthError(error, {
+        repository: 'auth-prisma-users',
+        operation: 'save-user',
+      });
     }
   }
 
@@ -102,20 +97,11 @@ export class AuthPrismaUsersRepository {
       await this.prisma.user.update({
         where: { id: userId },
         data: {
-          userRole: {
-            upsert: {
-              create: {
-                role: {
-                  connect: {
-                    code: role,
-                  },
-                },
-              },
-              update: {
-                role: {
-                  connect: {
-                    code: role,
-                  },
+          userRoles: {
+            create: {
+              role: {
+                connect: {
+                  code: role,
                 },
               },
             },
@@ -123,7 +109,10 @@ export class AuthPrismaUsersRepository {
         },
       });
     } catch (error) {
-      throw mapPrismaAuthError(error);
+      throw mapPrismaAuthError(error, {
+        repository: 'auth-prisma-users',
+        operation: 'update-user-role',
+      });
     }
   }
 
@@ -134,7 +123,10 @@ export class AuthPrismaUsersRepository {
         data: { tokenVersion: { increment: 1 } },
       });
     } catch (error) {
-      throw mapPrismaAuthError(error);
+      throw mapPrismaAuthError(error, {
+        repository: 'auth-prisma-users',
+        operation: 'bump-user-token-version',
+      });
     }
   }
 }

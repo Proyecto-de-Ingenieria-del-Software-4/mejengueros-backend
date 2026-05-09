@@ -7,7 +7,7 @@ export class UpdateUserRoleUseCase {
 
   async execute(command: UpdateUserRoleCommand): Promise<void> {
     const actor = await this.deps.userRepository.findById(command.actorUserId);
-    if (!actor || actor.role !== 'ADMIN') {
+    if (!actor || !actor.roles.includes('ADMIN')) {
       throw new ForbiddenAuthActionError();
     }
 

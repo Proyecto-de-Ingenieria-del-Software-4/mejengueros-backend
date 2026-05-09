@@ -46,7 +46,10 @@ export class AuthPrismaVerificationTokensRepository {
         },
       });
     } catch (error) {
-      throw mapPrismaAuthError(error);
+      throw mapPrismaAuthError(error, {
+        repository: 'auth-prisma-verification-tokens',
+        operation: 'issue-verification-token',
+      });
     }
   }
 
@@ -72,7 +75,10 @@ export class AuthPrismaVerificationTokensRepository {
       });
       return { userId: token.userId };
     } catch (error) {
-      throw mapPrismaAuthError(error);
+      throw mapPrismaAuthError(error, {
+        repository: 'auth-prisma-verification-tokens',
+        operation: 'consume-verification-token',
+      });
     }
   }
 }
@@ -97,7 +103,10 @@ export class AuthPrismaPasswordResetTokensRepository {
         },
       });
     } catch (error) {
-      throw mapPrismaAuthError(error);
+      throw mapPrismaAuthError(error, {
+        repository: 'auth-prisma-password-reset-tokens',
+        operation: 'issue-password-reset-token',
+      });
     }
   }
 
@@ -123,7 +132,10 @@ export class AuthPrismaPasswordResetTokensRepository {
       });
       return { userId: token.userId };
     } catch (error) {
-      throw mapPrismaAuthError(error);
+      throw mapPrismaAuthError(error, {
+        repository: 'auth-prisma-password-reset-tokens',
+        operation: 'consume-password-reset-token',
+      });
     }
   }
 }

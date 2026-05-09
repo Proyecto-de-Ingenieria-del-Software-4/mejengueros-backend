@@ -3,5 +3,5 @@ import type { AuthRole } from './auth-role.type';
 
 export type LoginLocalResult = {
   tokens: IssueTokensResult;
-  user: { id: string; role: AuthRole };
+  user: { id: string; roles: AuthRole[] };
 };

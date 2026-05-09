@@ -7,7 +7,7 @@ describe('AuthUser', () => {
       username: 'tester',
       email: 'tester@example.com',
       emailVerified: false,
-      role: 'USER',
+      roles: ['USER'],
       tokenVersion: 0,
       failedLoginAttempts: 0,
       lockUntil: null,
@@ -52,7 +52,7 @@ describe('AuthUser', () => {
       username: 'tester2',
       email: 'tester2@example.com',
       emailVerified: true,
-      role: 'USER',
+      roles: ['USER'],
       tokenVersion: 4,
       failedLoginAttempts: 2,
       lockUntil: new Date('2026-01-01T10:20:00.000Z'),
@@ -72,7 +72,7 @@ describe('AuthUser', () => {
       username: 'tester3',
       email: 'tester3@example.com',
       emailVerified: true,
-      role: 'ADMIN',
+      roles: ['USER', 'ADMIN'],
       tokenVersion: 1,
       failedLoginAttempts: 0,
       lockUntil: null,
@@ -82,6 +82,6 @@ describe('AuthUser', () => {
     expect(user.username).toBe('tester3');
     expect(user.email).toBe('tester3@example.com');
     expect(user.emailVerified).toBe(true);
-    expect(user.role).toBe('ADMIN');
+    expect(user.roles).toEqual(['USER', 'ADMIN']);
   });
 });
