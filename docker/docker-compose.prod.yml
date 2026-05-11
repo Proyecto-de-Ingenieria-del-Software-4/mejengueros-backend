@@ -36,8 +36,8 @@ services:
       AUTH_GOOGLE_WEB_CLIENT_IDS: ${AUTH_GOOGLE_WEB_CLIENT_IDS:?AUTH_GOOGLE_WEB_CLIENT_IDS is required}
       AUTH_GOOGLE_MOBILE_CLIENT_IDS: ${AUTH_GOOGLE_MOBILE_CLIENT_IDS:?AUTH_GOOGLE_MOBILE_CLIENT_IDS is required}
       NODE_ENV: production
-    ports:
-      - "${APP_PORT:-3000}:3000"
+    expose:
+      - "3000"
     healthcheck:
       test:
         [
