@@ -27,9 +27,12 @@ describe('AppModule architecture', () => {
       | Array<{ name?: string }>
       | undefined;
 
-    expect(
-      (controllers ?? []).map((controller) => controller.name ?? ''),
-    ).toEqual([]);
+    const controllerNames = (controllers ?? []).map(
+      (controller) => controller.name ?? '',
+    );
+
+    expect(controllerNames).not.toContain('AppController');
+    expect(controllerNames).toContain('HealthController');
   });
 
   it('does not expose root starter service provider', () => {

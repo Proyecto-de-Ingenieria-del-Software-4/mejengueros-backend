@@ -31,6 +31,67 @@
 $ yarn install
 ```
 
+## Docker
+
+### Lectura rápida (orden sugerido)
+1. `docker/docker-compose.yml` → desarrollo local con hot reload.
+2. `docker/Dockerfile.prod` + `docker/docker-compose.prod.yml` → ejecución productiva con `start:prod`.
+
+### Desarrollo local (actual, sin cambios)
+
+```bash
+$ cp .env.docker.example .env.docker
+$ docker compose --env-file .env.docker -f docker/docker-compose.yml up --build
+```
+
+Apagar:
+
+```bash
+$ docker compose --env-file .env.docker -f docker/docker-compose.yml down
+```
+
+### Producción (nueva opción)
+
+```bash
+$ cp .env.docker.prod.example .env.docker.prod
+$ docker compose --env-file .env.docker.prod -f docker/docker-compose.prod.yml up --build -d
+```
+
+Chequeo rápido:
+
+```bash
+$ curl http://localhost:3000/health
+```
+
+Respuesta esperada:
+
+```json
+{"status":"ok"}
+```
+
+Apagar:
+
+```bash
+$ docker compose --env-file .env.docker.prod -f docker/docker-compose.prod.yml down
+```
+
+### Diferencias dev vs prod
+
+| Tema | Desarrollo (`docker-compose.yml`) | Producción (`docker-compose.prod.yml`) |
+|---|---|---|
+| Dockerfile | `docker/Dockerfile` | `docker/Dockerfile.prod` (multistage) |
+| Comando app | `yarn start:dev` | `yarn start:prod` |
+| Volúmenes de código | Sí (`..:/usr/src/app`) | No |
+| Migraciones Prisma | Dentro del contenedor app al iniciar | Servicio `migrate` dedicado antes de levantar `app` |
+| Dependencias runtime | Dev/local | Solo producción |
+| Postgres expuesto al host | Sí (`5432:5432`) | No (solo red interna Docker) |
+| Healthcheck app | No obligatorio | Sí (`GET /health`) |
+
+Notas:
+- La app expone `http://localhost:3000` (o el `APP_PORT` configurado).
+- En producción, `migrate` debe terminar correctamente para que `app` inicie.
+- En producción, si faltan variables sensibles (`POSTGRES_PASSWORD`, `AUTH_*`), compose falla temprano con error explícito.
+
 ## Compile and run the project
 
 ```bash

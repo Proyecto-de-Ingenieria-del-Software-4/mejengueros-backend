@@ -1,30 +1,60 @@
 services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: nest_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin123}@postgres:5432/${POSTGRES_DB:-app_db}?schema=public
+      PORT: ${APP_PORT:-3000}
+      JWT_ACCESS_TTL_SECONDS: ${JWT_ACCESS_TTL_SECONDS:-900}
+      JWT_REFRESH_TTL_SECONDS: ${JWT_REFRESH_TTL_SECONDS:-1209600}
+      AUTH_ACTIVE_APP_KEY_ID: ${AUTH_ACTIVE_APP_KEY_ID:-app-key-active}
+      AUTH_GOOGLE_ACCEPTED_ISSUERS: ${AUTH_GOOGLE_ACCEPTED_ISSUERS:-accounts.google.com,https://accounts.google.com}
+      AUTH_GOOGLE_WEB_CLIENT_IDS: ${AUTH_GOOGLE_WEB_CLIENT_IDS:-google-web-client-id}
+      AUTH_GOOGLE_MOBILE_CLIENT_IDS: ${AUTH_GOOGLE_MOBILE_CLIENT_IDS:-google-mobile-client-id}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - ..:/usr/src/app
+      - app_node_modules:/usr/src/app/node_modules
+    command: sh -c "yarn prisma migrate deploy && yarn start:dev"
+    networks:
+      - backend_network
+
   postgres:
     image: postgres:18
     container_name: postgres_db
     restart: unless-stopped
 
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: app_db
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin123}
+      POSTGRES_DB: ${POSTGRES_DB:-app_db}
       TZ: America/Costa_Rica
 
     ports:
       - "5432:5432"
 
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d app_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-app_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - backend_network
 
 volumes:
+  app_node_modules:
   postgres_data:
 
 networks:
-  postgres_network:
+  backend_network:
     driver: bridge

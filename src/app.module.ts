@@ -5,8 +5,10 @@ import { SharedPersistenceModule } from './shared/persistence/persistence.module
 import { SharedEmailModule } from './shared/email/email.module';
 import { SharedEventsModule } from './shared/events/events.module';
 import { AuthModule } from './auth/auth.module';
+import { HealthController } from './health/health.controller';
 
 @Module({
+  controllers: [HealthController],
   imports: [
     SharedConfigModule,
     SharedSecurityModule,
