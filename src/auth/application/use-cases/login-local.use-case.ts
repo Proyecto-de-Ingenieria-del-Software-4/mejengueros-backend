@@ -41,7 +41,8 @@ export class LoginLocalUseCase {
       throw new InvalidCredentialsError();
     }
 
-    if (!user.emailVerified) throw new EmailVerificationRequiredError();
+    // TODO: Remover - Se comenta de momento la verificacion de email para permitir pruebas con cuentas sin verificar
+    //if (!user.emailVerified) throw new EmailVerificationRequiredError();
 
     await this.deps.userRepository.save({
       ...user,
