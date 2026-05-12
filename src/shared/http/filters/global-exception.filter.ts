@@ -6,13 +6,13 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
 import type { Request, Response } from 'express';
 import { DomainException } from '../../domain/exceptions/domain.exception';
 import type {
   ApiErrorDetail,
   ApiErrorResponse,
 } from '../../domain/interfaces/api-response.interface';
+import { ensureRequestId, type RequestWithRequestId } from '../request-id';
 
 const STATUS_CODE_MAP: Record<number, string> = {
   [HttpStatus.BAD_REQUEST]: 'validation/failed',
@@ -47,9 +47,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const context = host.switchToHttp();
     const response = context.getResponse<Response>();
-    const request = context.getRequest<Request>();
-    const requestId =
-      (request.headers['x-request-id'] as string | undefined) ?? randomUUID();
+    const request = context.getRequest<RequestWithRequestId>();
+    const requestId = ensureRequestId(request, response);
     const path = request.originalUrl.split('?')[0];
 
     if (exception instanceof DomainException) {

@@ -15,8 +15,8 @@ import {
 } from '../src/auth/domain/exceptions';
 import { JwtAccessTokenVerifierService } from '../src/auth/infrastructure/security/jwt-access-token-verifier.service';
 import { GlobalExceptionFilter } from '../src/shared/http/filters/global-exception.filter';
-import { LoggingInterceptor } from '../src/shared/http/interceptors/logging.interceptor';
 import { TransformInterceptor } from '../src/shared/http/interceptors/transform.interceptor';
+import { LoggerErrorInterceptor } from 'nestjs-pino';
 
 describe('AuthController HTTP flows (integration)', () => {
   let app: INestApplication<App>;
@@ -103,7 +103,7 @@ describe('AuthController HTTP flows (integration)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalInterceptors(
-      new LoggingInterceptor(),
+      new LoggerErrorInterceptor(),
       new TransformInterceptor(),
     );
     app.useGlobalFilters(new GlobalExceptionFilter());

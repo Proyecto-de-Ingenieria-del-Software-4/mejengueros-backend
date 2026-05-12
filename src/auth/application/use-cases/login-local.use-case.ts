@@ -1,6 +1,5 @@
 import {
   AccountLockedError,
-  EmailVerificationRequiredError,
   InvalidCredentialsError,
 } from '../../domain/exceptions/auth-domain.exceptions';
 import { InvalidAuthIdentifierError } from '../../domain/exceptions/auth-domain.exceptions';
